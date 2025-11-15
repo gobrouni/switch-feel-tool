@@ -1456,6 +1456,9 @@
           animation: 150,
           ghostClass: 'custom-preset-card-dragging',
           draggable: '.custom-preset-card',
+          delay: 500,
+          delayOnTouchOnly: true,
+          touchStartThreshold: 5,
           onEnd: function () {
             updatePresetsOrder();
           }
