@@ -350,7 +350,7 @@
     /* 自定義預設樣式 */
     .custom-presets-container {
       display: flex;
-      flex-direction: column;
+      flex-direction: column-reverse;
       gap: 15px;
       padding-right: 5px; /* 為滾動條留空間 */
     }
@@ -388,7 +388,7 @@
       border-radius: 10px;
       padding: 15px;
       transition: all 0.3s;
-      cursor: move;
+      cursor: pointer;
     }
 
     .custom-preset-card:hover {
@@ -403,6 +403,12 @@
 
     .custom-preset-card.dragging {
       opacity: 0.5;
+    }
+
+    .custom-preset-card-dragging {
+      opacity: 0.5;
+      transform: scale(0.98);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.12);
     }
 
     .preset-card-header {
@@ -786,7 +792,7 @@
           <button class="preset-btn" onclick="applyPreset(0.4, 0, 0.2, 1, 0.3)">標準流暢</button>
           <button class="preset-btn" onclick="applyPreset(0.19, 1, 0.22, 1, 0.8)">快啟慢收</button>
           <button class="preset-btn" onclick="applyPreset(0.04, 1.1, 0.48, 1.05, 0.4)">輕快彈性</button>
-          <button class="preset-btn" onclick="applyPreset(0.5, -0.3, 0.3, 1.3, 0.5)">柔和回彈</button>
+          <button class="preset-btn" onclick="applyPreset(0.65, -0.05, 0.3, 1.3, 0.7)">柔和回彈</button>
         </div>
       </div>
     </div>
@@ -807,7 +813,6 @@
           <div class="preset-card-header">
             <div class="preset-name" onclick="editPresetName(1763190696131.3142)">自定義 1</div>
             <div class="preset-actions">
-              <button class="preset-action-btn apply" onclick="applyCustomPreset(1763190696131.3142)" title="套用">✓</button>
               <button class="preset-action-btn" onclick="editPresetName(1763190696131.3142)" title="編輯">✏️</button>
               <button class="preset-action-btn delete" onclick="deletePreset(1763190696131.3142)" title="刪除">🗑️</button>
             </div>
@@ -823,7 +828,6 @@
           <div class="preset-card-header">
             <div class="preset-name" onclick="editPresetName(1763190696131.6138)">自定義 2</div>
             <div class="preset-actions">
-              <button class="preset-action-btn apply" onclick="applyCustomPreset(1763190696131.6138)" title="套用">✓</button>
               <button class="preset-action-btn" onclick="editPresetName(1763190696131.6138)" title="編輯">✏️</button>
               <button class="preset-action-btn delete" onclick="deletePreset(1763190696131.6138)" title="刪除">🗑️</button>
             </div>
@@ -839,7 +843,6 @@
           <div class="preset-card-header">
             <div class="preset-name" onclick="editPresetName(1763190696131.493)">自定義 3</div>
             <div class="preset-actions">
-              <button class="preset-action-btn apply" onclick="applyCustomPreset(1763190696131.493)" title="套用">✓</button>
               <button class="preset-action-btn" onclick="editPresetName(1763190696131.493)" title="編輯">✏️</button>
               <button class="preset-action-btn delete" onclick="deletePreset(1763190696131.493)" title="刪除">🗑️</button>
             </div>
@@ -855,7 +858,6 @@
           <div class="preset-card-header">
             <div class="preset-name" onclick="editPresetName(1763190702375.0425)">自定義 1</div>
             <div class="preset-actions">
-              <button class="preset-action-btn apply" onclick="applyCustomPreset(1763190702375.0425)" title="套用">✓</button>
               <button class="preset-action-btn" onclick="editPresetName(1763190702375.0425)" title="編輯">✏️</button>
               <button class="preset-action-btn delete" onclick="deletePreset(1763190702375.0425)" title="刪除">🗑️</button>
             </div>
@@ -871,7 +873,6 @@
           <div class="preset-card-header">
             <div class="preset-name" onclick="editPresetName(1763190702375.4822)">自定義 2</div>
             <div class="preset-actions">
-              <button class="preset-action-btn apply" onclick="applyCustomPreset(1763190702375.4822)" title="套用">✓</button>
               <button class="preset-action-btn" onclick="editPresetName(1763190702375.4822)" title="編輯">✏️</button>
               <button class="preset-action-btn delete" onclick="deletePreset(1763190702375.4822)" title="刪除">🗑️</button>
             </div>
@@ -887,7 +888,6 @@
           <div class="preset-card-header">
             <div class="preset-name" onclick="editPresetName(1763190702375.0344)">自定義 3</div>
             <div class="preset-actions">
-              <button class="preset-action-btn apply" onclick="applyCustomPreset(1763190702375.0344)" title="套用">✓</button>
               <button class="preset-action-btn" onclick="editPresetName(1763190702375.0344)" title="編輯">✏️</button>
               <button class="preset-action-btn delete" onclick="deletePreset(1763190702375.0344)" title="刪除">🗑️</button>
             </div>
@@ -903,7 +903,6 @@
           <div class="preset-card-header">
             <div class="preset-name" onclick="editPresetName(1763192536804.4182)">自定義 1</div>
             <div class="preset-actions">
-              <button class="preset-action-btn apply" onclick="applyCustomPreset(1763192536804.4182)" title="套用">✓</button>
               <button class="preset-action-btn" onclick="editPresetName(1763192536804.4182)" title="編輯">✏️</button>
               <button class="preset-action-btn delete" onclick="deletePreset(1763192536804.4182)" title="刪除">🗑️</button>
             </div>
@@ -919,7 +918,6 @@
           <div class="preset-card-header">
             <div class="preset-name" onclick="editPresetName(1763192536804.2397)">自定義 2</div>
             <div class="preset-actions">
-              <button class="preset-action-btn apply" onclick="applyCustomPreset(1763192536804.2397)" title="套用">✓</button>
               <button class="preset-action-btn" onclick="editPresetName(1763192536804.2397)" title="編輯">✏️</button>
               <button class="preset-action-btn delete" onclick="deletePreset(1763192536804.2397)" title="刪除">🗑️</button>
             </div>
@@ -935,7 +933,6 @@
           <div class="preset-card-header">
             <div class="preset-name" onclick="editPresetName(1763192536804.2395)">自定義 3</div>
             <div class="preset-actions">
-              <button class="preset-action-btn apply" onclick="applyCustomPreset(1763192536804.2395)" title="套用">✓</button>
               <button class="preset-action-btn" onclick="editPresetName(1763192536804.2395)" title="編輯">✏️</button>
               <button class="preset-action-btn delete" onclick="deletePreset(1763192536804.2395)" title="刪除">🗑️</button>
             </div>
@@ -975,6 +972,7 @@
     </div>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
   <script>
     // ============ 預設管理類 ============
     class PresetManager {
@@ -1359,13 +1357,13 @@
       const isActive = presetManager.currentActiveId === preset.id;
 
       return `
-        <div class="custom-preset-card ${isActive ? 'active' : ''}" draggable="true" data-id="${preset.id}">
+        <div class="custom-preset-card ${isActive ? 'active' : ''}" draggable="true" data-id="${preset.id}" onclick="applyCustomPreset(${preset.id})">
           <div class="preset-card-header">
-            <div class="preset-name" onclick="editPresetName(${preset.id})">${preset.name}</div>
+            <div class="preset-name" onclick="event.stopPropagation(); editPresetName(${preset.id})">${preset.name}</div>
             <div class="preset-actions">
-              <button class="preset-action-btn apply" onclick="applyCustomPreset(${preset.id})" title="套用">✓</button>
-              <button class="preset-action-btn" onclick="editPresetName(${preset.id})" title="編輯">✏️</button>
-              <button class="preset-action-btn delete" onclick="deletePreset(${preset.id})" title="刪除">🗑️</button>
+              
+              <button class="preset-action-btn" onclick="event.stopPropagation(); editPresetName(${preset.id})" title="編輯">✏️</button>
+              <button class="preset-action-btn delete" onclick="event.stopPropagation(); deletePreset(${preset.id})" title="刪除">🗑️</button>
             </div>
           </div>
           <div class="preset-card-details">
@@ -1444,6 +1442,29 @@
 
     // ============ 拖曳排序 ============
     function setupDragAndDrop() {
+      const container = document.getElementById('customPresetsContainer');
+      if (!container) return;
+
+      // Prefer SortableJS (works well on touch devices)
+      if (window.Sortable) {
+        // destroy existing instance if present
+        if (container._sortable) {
+          try { container._sortable.destroy(); } catch (e) { /* ignore */ }
+        }
+
+        container._sortable = Sortable.create(container, {
+          animation: 150,
+          ghostClass: 'custom-preset-card-dragging',
+          draggable: '.custom-preset-card',
+          onEnd: function () {
+            updatePresetsOrder();
+          }
+        });
+
+        return;
+      }
+
+      // Fallback: native HTML5 drag/drop (desktop)
       const cards = document.querySelectorAll('.custom-preset-card');
       let draggedElement = null;
 
@@ -1451,7 +1472,7 @@
         card.addEventListener('dragstart', function(e) {
           draggedElement = this;
           this.classList.add('dragging');
-          e.dataTransfer.effectAllowed = 'move';
+          if (e.dataTransfer) e.dataTransfer.effectAllowed = 'move';
         });
 
         card.addEventListener('dragend', function() {
