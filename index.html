@@ -1,0 +1,1694 @@
+<!DOCTYPE html>
+<html lang="zh-TW"><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>緩動曲線自訂工具</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+	  -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f0f0f0;
+      min-height: 100vh;
+      padding: 40px 20px;
+      
+      /* body 層級的滾動條美化 */
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+    }
+
+    /* Webkit 瀏覽器 (Chrome, Safari, Edge) - body 滾動條 */
+    body::-webkit-scrollbar {
+      width: 10px;
+    }
+
+    body::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    body::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 5px;
+      transition: background 0.3s;
+    }
+
+    body::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.4);
+    }
+
+    .container {
+      background: white;
+      border-radius: 14px;
+      padding: 40px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      max-width: 600px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    h1 {
+      text-align: center;
+      color: #333;
+      margin-bottom: 30px;
+      font-size: 28px;
+    }
+
+    /* 收合區塊樣式 */
+    .collapsible-section {
+      margin-bottom: 20px;
+      border: 2px solid #e0e0e0;
+      border-radius: 10px;
+      overflow: hidden;
+      transition: border-color 0.3s;
+    }
+
+    .collapsible-section:hover {
+      border-color: #667eea;
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px 20px;
+      background: #f8f9fa;
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.3s;
+    }
+
+    .section-header:hover {
+      background: #e9ecef;
+    }
+
+    .section-header h3 {
+      color: #333;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .section-toggle {
+      font-size: 20px;
+      transition: transform 0.3s;
+      color: #667eea;
+    }
+
+    .section-toggle.collapsed {
+      transform: rotate(-90deg);
+    }
+
+    .section-content {
+      max-height: 2000px;
+      overflow: hidden;
+      transition: max-height 0.4s ease, padding 0.4s ease;
+      padding: 20px;
+    }
+
+    .section-content.collapsed {
+      max-height: 0;
+      padding: 0 20px;
+    }
+
+    /* 自定義預設區塊特殊處理 */
+    .section-content.custom-presets-section {
+      max-height: 500px; /* 限制最大高度 */
+      overflow-y: auto;
+      overflow-x: hidden;
+      
+      /* 美化內部滾動條 */
+      scrollbar-width: thin;
+      scrollbar-color: rgba(102, 126, 234, 0.3) transparent;
+    }
+
+    .section-content.custom-presets-section::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .section-content.custom-presets-section::-webkit-scrollbar-track {
+      background: transparent;
+      margin: 10px 0;
+    }
+
+    .section-content.custom-presets-section::-webkit-scrollbar-thumb {
+      background: rgba(102, 126, 234, 0.3);
+      border-radius: 3px;
+    }
+
+    .section-content.custom-presets-section::-webkit-scrollbar-thumb:hover {
+      background: rgba(102, 126, 234, 0.5);
+    }
+
+    /* 展開時的最大高度 */
+    .section-content.custom-presets-section:not(.collapsed) {
+      max-height: 600px;
+    }
+
+    /* 收合時的高度 */
+    .section-content.custom-presets-section.collapsed {
+      max-height: 0;
+      overflow: hidden;
+    }
+
+    /* 滾動提示 */
+    .scroll-indicator {
+      text-align: center;
+      padding: 8px;
+      background: linear-gradient(to bottom, transparent, rgba(102, 126, 234, 0.05));
+      color: #667eea;
+      font-size: 12px;
+      position: sticky;
+      bottom: 0;
+      margin: -20px -20px 0 -20px;
+      border-radius: 0 0 10px 10px;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+    }
+
+    .scroll-indicator.show {
+      opacity: 1;
+    }
+
+    .preview-section {
+      background: #f8f9fa;
+      padding: 30px;
+      border-radius: 16px;
+      margin-bottom: 30px;
+    }
+
+    .toggle-buttons {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      background: #d6d6d6;
+      padding: 6px;
+      border-radius: 16px;
+      position: relative;
+    }
+
+    .toggle-slider {
+      position: absolute;
+      top: 6px;
+      left: 6px;
+      width: calc(50% - 11px);
+      height: calc(100% - 12px);
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      z-index: 1;
+    }
+
+    .toggle-slider.move-right {
+      transform: translateX(calc(100% + 10px));
+    }
+
+    .toggle-btn {
+      flex: 1;
+      padding: 12px 20px;
+      border: none;
+      background: transparent;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 600;
+      color: #666;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: color 0.3s ease;
+      position: relative;
+      z-index: 2;
+    }
+
+    .toggle-btn.active {
+      color: #333;
+    }
+
+    .current-bezier {
+      text-align: center;
+      font-family: 'Courier New', monospace;
+      font-size: 16px;
+      color: #3a3a3a;
+      font-weight: bold;
+      padding: 15px;
+      background: white;
+      border-radius: 10px;
+      margin-top: 15px;
+    }
+
+    .control-group {
+      margin-bottom: 25px;
+    }
+
+    .control-label {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      font-weight: 600;
+      color: #333;
+    }
+
+    .control-value {
+      font-family: 'Courier New', monospace;
+      color: #667eea;
+      font-size: 18px;
+      background: white;
+      padding: 4px 12px;
+      border-radius: 6px;
+      border: 2px solid #e0e0e0;
+      min-width: 70px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .control-value:hover {
+      border-color: #667eea;
+      background: #f8f9ff;
+    }
+
+    .control-value-input {
+      font-family: 'Courier New', monospace;
+      color: #667eea;
+      font-size: 18px;
+      background: white;
+      padding: 4px 12px;
+      border-radius: 6px;
+      border: 2px solid #667eea;
+      min-width: 70px;
+      text-align: center;
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    input[type="range"] {
+      width: 100%;
+      height: 8px;
+      border-radius: 4px;
+      background: #e0e0e0;
+      outline: none;
+      -webkit-appearance: none;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #667eea;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
+    }
+
+    input[type="range"]::-moz-range-thumb {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #667eea;
+      cursor: pointer;
+      border: none;
+    }
+
+    .presets {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    .preset-btn {
+      padding: 12px;
+      border: 2px solid #667eea;
+      background: white;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      color: #667eea;
+      transition: all 0.3s;
+    }
+
+    .preset-btn:hover {
+      background: #667eea;
+      color: white;
+      transform: translateY(-2px);
+    }
+
+    /* 自定義預設樣式 */
+    .custom-presets-container {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      padding-right: 5px; /* 為滾動條留空間 */
+    }
+
+    .save-preset-btn {
+      width: 100%;
+      padding: 14px;
+      background: #667eea;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+	  margin-bottom: 15px
+    }
+
+    .save-preset-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    .custom-preset-card {
+      background: #f8f9fa;
+      border: 2px solid #e0e0e0;
+      border-radius: 10px;
+      padding: 15px;
+      transition: all 0.3s;
+      cursor: move;
+    }
+
+    .custom-preset-card:hover {
+      border-color: #667eea;
+      box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+    }
+
+    .custom-preset-card.active {
+      border-color: #667eea;
+      background: #f0f4ff;
+    }
+
+    .custom-preset-card.dragging {
+      opacity: 0.5;
+    }
+
+    .preset-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .preset-name {
+      font-weight: 600;
+      color: #333;
+      font-size: 16px;
+      flex: 1;
+      cursor: text;
+    }
+
+    .preset-name-input {
+      font-weight: 600;
+      color: #333;
+      font-size: 16px;
+      border: 2px solid #667eea;
+      border-radius: 6px;
+      padding: 4px 8px;
+      outline: none;
+      width: 100%;
+    }
+
+    .preset-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .preset-action-btn {
+      background: white;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 14px;
+    }
+
+    .preset-action-btn:hover {
+      border-color: #667eea;
+      transform: scale(1.1);
+    }
+
+    .preset-action-btn.apply {
+      background: #667eea;
+      color: white;
+      border-color: #667eea;
+    }
+
+    .preset-action-btn.delete:hover {
+      border-color: #dc3545;
+      color: #dc3545;
+    }
+
+    .preset-card-details {
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      color: #666;
+      line-height: 1.6;
+    }
+
+    .preset-card-meta {
+      font-size: 12px;
+      color: #999;
+      margin-top: 8px;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 30px;
+      color: #999;
+    }
+
+    .empty-state-icon {
+      font-size: 48px;
+      margin-bottom: 10px;
+    }
+
+    .copy-btn {
+      width: 100%;
+      padding: 16px;
+      background: #667eea;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      margin-bottom: 10px;
+    }
+
+    .copy-btn:hover {
+      background: #5568d3;
+      transform: translateY(-2px);
+    }
+
+    .copy-btn.secondary {
+      background: #6c757d;
+    }
+
+    .copy-btn.secondary:hover {
+      background: #5a6268;
+    }
+
+    .export-import-buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 15px;
+      position: sticky;
+      bottom: 0;
+      z-index: 5;
+    }
+
+    .export-btn, .import-btn {
+      padding: 12px;
+      border: 2px solid #667eea;
+      background: white;
+      color: #667eea;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .export-btn:hover, .import-btn:hover {
+      background: #667eea;
+      color: white;
+    }
+
+    .hint {
+      background: #fff3cd;
+      padding: 15px;
+      border-radius: 10px;
+      margin-top: 20px;
+      font-size: 14px;
+      line-height: 1.6;
+      color: #856404;
+    }
+
+    .hidden-textarea {
+      position: absolute;
+      left: -9999px;
+      opacity: 0;
+    }
+
+    .hidden-file-input {
+      display: none;
+    }
+
+    .toast {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #28a745;
+      color: white;
+      padding: 15px 25px;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      z-index: 1000;
+      animation: slideIn 0.3s ease;
+    }
+
+    .toast.error {
+      background: #dc3545;
+    }
+
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .modal {
+      background: white;
+      border-radius: 16px;
+      padding: 30px;
+      max-width: 400px;
+      width: 90%;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+
+    .modal h3 {
+      margin-bottom: 20px;
+      color: #333;
+    }
+
+    .modal-input {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 16px;
+      margin-bottom: 20px;
+      outline: none;
+    }
+
+    .modal-input:focus {
+      border-color: #667eea;
+    }
+
+    .modal-buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .modal-btn {
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .modal-btn.primary {
+      background: #667eea;
+      color: white;
+    }
+
+    .modal-btn.primary:hover {
+      background: #5568d3;
+    }
+
+    .modal-btn.secondary {
+      background: #e0e0e0;
+      color: #333;
+    }
+
+    .modal-btn.secondary:hover {
+      background: #d0d0d0;
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateX(400px);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
+
+    @media (max-width: 600px) {
+      body {
+        padding: 20px 10px;
+      }
+
+      .container {
+        padding: 20px;
+      }
+
+      .presets {
+        grid-template-columns: 1fr;
+      }
+
+      .section-content.custom-presets-section {
+        max-height: 400px; /* 手機上稍微降低高度 */
+      }
+    }
+  </style>
+<style id="__web-inspector-hide-shortcut-style__">
+.__web-inspector-hide-shortcut__, .__web-inspector-hide-shortcut__ *
+{
+    visibility: hidden !important;
+}
+</style></head>
+<body>
+  <textarea id="hiddenTextarea" class="hidden-textarea"></textarea>
+  <input type="file" id="hiddenFileInput" class="hidden-file-input" accept=".json">
+  
+  <div class="container">
+    <h1>SWITCH過渡效果自訂器</h1>
+
+    <div class="preview-section">
+      <h3 style="margin-bottom: 15px; color: #333;">即時預覽</h3>
+      <div class="toggle-buttons">
+        <div class="toggle-slider" id="slider" style="transition: transform 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55);"></div>
+        <button class="toggle-btn active" onclick="toggle(this)">
+          <span>選項 A</span>
+        </button>
+        <button class="toggle-btn" onclick="toggle(this)">
+          <span>選項 B</span>
+        </button>
+      </div>
+      <div class="current-bezier" id="bezierDisplay">cubic-bezier(0.68, -0.55, 0.27, 1.55)</div>
+    </div>
+
+    <!-- 調整參數區塊 -->
+    <div class="collapsible-section">
+      <div class="section-header" onclick="toggleSection(this)">
+        <h3>⚙️ 調整參數</h3>
+        <span class="section-toggle collapsed">▼</span>
+      </div>
+      <div class="section-content collapsed">
+        <div class="control-group">
+          <div class="control-label">
+            <span>x1 (開始時間點)</span>
+            <span class="control-value" id="x1Value" onclick="makeEditable('x1', 0, 1)">0.68</span>
+          </div>
+          <input type="range" id="x1" min="0" max="1" step="0.01" value="0.68" oninput="updateBezier()">
+        </div>
+
+        <div class="control-group">
+          <div class="control-label">
+            <span>y1 (開始速度)</span>
+            <span class="control-value" id="y1Value" onclick="makeEditable('y1', -2, 2)">-0.55</span>
+          </div>
+          <input type="range" id="y1" min="-2" max="2" step="0.01" value="-0.55" oninput="updateBezier()">
+        </div>
+
+        <div class="control-group">
+          <div class="control-label">
+            <span>x2 (結束時間點)</span>
+            <span class="control-value" id="x2Value" onclick="makeEditable('x2', 0, 1)">0.27</span>
+          </div>
+          <input type="range" id="x2" min="0" max="1" step="0.01" value="0.265" oninput="updateBezier()">
+        </div>
+
+        <div class="control-group">
+          <div class="control-label">
+            <span>y2 (結束速度)</span>
+            <span class="control-value" id="y2Value" onclick="makeEditable('y2', -2, 2)">1.55</span>
+          </div>
+          <input type="range" id="y2" min="-2" max="2" step="0.01" value="1.55" oninput="updateBezier()">
+        </div>
+
+        <div class="control-group">
+          <div class="control-label">
+            <span>動畫時長 (秒)</span>
+            <span class="control-value" id="durationValue" onclick="makeEditable('duration', 0.1, 2)">0.6</span>
+          </div>
+          <input type="range" id="duration" min="0.1" max="2" step="0.1" value="0.6" oninput="updateBezier()">
+        </div>
+      </div>
+    </div>
+
+    <!-- 快速預設區塊 -->
+    <div class="collapsible-section">
+      <div class="section-header" onclick="toggleSection(this)">
+        <h3>⚡ 快速預設</h3>
+        <span class="section-toggle collapsed">▼</span>
+      </div>
+      <div class="section-content collapsed">
+        <div class="presets">
+          <button class="preset-btn" onclick="applyPreset(0.4, 0, 0.2, 1, 0.3)">標準流暢</button>
+          <button class="preset-btn" onclick="applyPreset(0.34, 1.56, 0.64, 1, 0.5)">輕度黏稠</button>
+          <button class="preset-btn" onclick="applyPreset(0.68, -0.55, 0.265, 1.55, 0.6)">中度黏稠</button>
+          <button class="preset-btn" onclick="applyPreset(0.175, 0.885, 0.32, 1.275, 0.7)">彈性黏稠</button>
+          <button class="preset-btn" onclick="applyPreset(0.19, 1, 0.22, 1, 0.8)">極致黏稠</button>
+          <button class="preset-btn" onclick="applyPreset(0.68, -0.6, 0.32, 1.6, 0.8)">彈跳效果</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 我的自定義區塊 -->
+    <div class="collapsible-section">
+      <div class="section-header" onclick="toggleSection(this)">
+        <h3>💾 我的自定義 (<span id="customCount">9</span>)</h3>
+        <span class="section-toggle">▼</span>
+      </div>
+      <div class="section-content custom-presets-section" id="customPresetsSection">
+        <button class="save-preset-btn" onclick="showSaveModal()">
+          儲存當前設定
+        </button>
+        
+        <div id="customPresetsContainer" class="custom-presets-container">
+        <div class="custom-preset-card " draggable="true" data-id="1763190696131.3142">
+          <div class="preset-card-header">
+            <div class="preset-name" onclick="editPresetName(1763190696131.3142)">自定義 1</div>
+            <div class="preset-actions">
+              <button class="preset-action-btn apply" onclick="applyCustomPreset(1763190696131.3142)" title="套用">✓</button>
+              <button class="preset-action-btn" onclick="editPresetName(1763190696131.3142)" title="編輯">✏️</button>
+              <button class="preset-action-btn delete" onclick="deletePreset(1763190696131.3142)" title="刪除">🗑️</button>
+            </div>
+          </div>
+          <div class="preset-card-details">
+            cubic-bezier(0.68, -0.55, 0.27, 1.55)<br>
+            ⏱️ 0.6s
+          </div>
+          <div class="preset-card-meta">📅 2025/11/15 下午02:38</div>
+        </div>
+      
+        <div class="custom-preset-card " draggable="true" data-id="1763190696131.6138">
+          <div class="preset-card-header">
+            <div class="preset-name" onclick="editPresetName(1763190696131.6138)">自定義 2</div>
+            <div class="preset-actions">
+              <button class="preset-action-btn apply" onclick="applyCustomPreset(1763190696131.6138)" title="套用">✓</button>
+              <button class="preset-action-btn" onclick="editPresetName(1763190696131.6138)" title="編輯">✏️</button>
+              <button class="preset-action-btn delete" onclick="deletePreset(1763190696131.6138)" title="刪除">🗑️</button>
+            </div>
+          </div>
+          <div class="preset-card-details">
+            cubic-bezier(1, 2, 1, 2)<br>
+            ⏱️ 0.6s
+          </div>
+          <div class="preset-card-meta">📅 2025/11/15 下午02:38</div>
+        </div>
+      
+        <div class="custom-preset-card " draggable="true" data-id="1763190696131.493">
+          <div class="preset-card-header">
+            <div class="preset-name" onclick="editPresetName(1763190696131.493)">自定義 3</div>
+            <div class="preset-actions">
+              <button class="preset-action-btn apply" onclick="applyCustomPreset(1763190696131.493)" title="套用">✓</button>
+              <button class="preset-action-btn" onclick="editPresetName(1763190696131.493)" title="編輯">✏️</button>
+              <button class="preset-action-btn delete" onclick="deletePreset(1763190696131.493)" title="刪除">🗑️</button>
+            </div>
+          </div>
+          <div class="preset-card-details">
+            cubic-bezier(0, -2, 0, -2)<br>
+            ⏱️ 0.6s
+          </div>
+          <div class="preset-card-meta">📅 2025/11/15 下午02:39</div>
+        </div>
+      
+        <div class="custom-preset-card " draggable="true" data-id="1763190702375.0425">
+          <div class="preset-card-header">
+            <div class="preset-name" onclick="editPresetName(1763190702375.0425)">自定義 1</div>
+            <div class="preset-actions">
+              <button class="preset-action-btn apply" onclick="applyCustomPreset(1763190702375.0425)" title="套用">✓</button>
+              <button class="preset-action-btn" onclick="editPresetName(1763190702375.0425)" title="編輯">✏️</button>
+              <button class="preset-action-btn delete" onclick="deletePreset(1763190702375.0425)" title="刪除">🗑️</button>
+            </div>
+          </div>
+          <div class="preset-card-details">
+            cubic-bezier(0.68, -0.55, 0.27, 1.55)<br>
+            ⏱️ 0.6s
+          </div>
+          <div class="preset-card-meta">📅 2025/11/15 下午02:38</div>
+        </div>
+      
+        <div class="custom-preset-card " draggable="true" data-id="1763190702375.4822">
+          <div class="preset-card-header">
+            <div class="preset-name" onclick="editPresetName(1763190702375.4822)">自定義 2</div>
+            <div class="preset-actions">
+              <button class="preset-action-btn apply" onclick="applyCustomPreset(1763190702375.4822)" title="套用">✓</button>
+              <button class="preset-action-btn" onclick="editPresetName(1763190702375.4822)" title="編輯">✏️</button>
+              <button class="preset-action-btn delete" onclick="deletePreset(1763190702375.4822)" title="刪除">🗑️</button>
+            </div>
+          </div>
+          <div class="preset-card-details">
+            cubic-bezier(1, 2, 1, 2)<br>
+            ⏱️ 0.6s
+          </div>
+          <div class="preset-card-meta">📅 2025/11/15 下午02:38</div>
+        </div>
+      
+        <div class="custom-preset-card " draggable="true" data-id="1763190702375.0344">
+          <div class="preset-card-header">
+            <div class="preset-name" onclick="editPresetName(1763190702375.0344)">自定義 3</div>
+            <div class="preset-actions">
+              <button class="preset-action-btn apply" onclick="applyCustomPreset(1763190702375.0344)" title="套用">✓</button>
+              <button class="preset-action-btn" onclick="editPresetName(1763190702375.0344)" title="編輯">✏️</button>
+              <button class="preset-action-btn delete" onclick="deletePreset(1763190702375.0344)" title="刪除">🗑️</button>
+            </div>
+          </div>
+          <div class="preset-card-details">
+            cubic-bezier(0, -2, 0, -2)<br>
+            ⏱️ 0.6s
+          </div>
+          <div class="preset-card-meta">📅 2025/11/15 下午02:39</div>
+        </div>
+      
+        <div class="custom-preset-card " draggable="true" data-id="1763192536804.4182">
+          <div class="preset-card-header">
+            <div class="preset-name" onclick="editPresetName(1763192536804.4182)">自定義 1</div>
+            <div class="preset-actions">
+              <button class="preset-action-btn apply" onclick="applyCustomPreset(1763192536804.4182)" title="套用">✓</button>
+              <button class="preset-action-btn" onclick="editPresetName(1763192536804.4182)" title="編輯">✏️</button>
+              <button class="preset-action-btn delete" onclick="deletePreset(1763192536804.4182)" title="刪除">🗑️</button>
+            </div>
+          </div>
+          <div class="preset-card-details">
+            cubic-bezier(0.68, -0.55, 0.27, 1.55)<br>
+            ⏱️ 0.6s
+          </div>
+          <div class="preset-card-meta">📅 2025/11/15 下午02:38</div>
+        </div>
+      
+        <div class="custom-preset-card " draggable="true" data-id="1763192536804.2397">
+          <div class="preset-card-header">
+            <div class="preset-name" onclick="editPresetName(1763192536804.2397)">自定義 2</div>
+            <div class="preset-actions">
+              <button class="preset-action-btn apply" onclick="applyCustomPreset(1763192536804.2397)" title="套用">✓</button>
+              <button class="preset-action-btn" onclick="editPresetName(1763192536804.2397)" title="編輯">✏️</button>
+              <button class="preset-action-btn delete" onclick="deletePreset(1763192536804.2397)" title="刪除">🗑️</button>
+            </div>
+          </div>
+          <div class="preset-card-details">
+            cubic-bezier(1, 2, 1, 2)<br>
+            ⏱️ 0.6s
+          </div>
+          <div class="preset-card-meta">📅 2025/11/15 下午02:38</div>
+        </div>
+      
+        <div class="custom-preset-card " draggable="true" data-id="1763192536804.2395">
+          <div class="preset-card-header">
+            <div class="preset-name" onclick="editPresetName(1763192536804.2395)">自定義 3</div>
+            <div class="preset-actions">
+              <button class="preset-action-btn apply" onclick="applyCustomPreset(1763192536804.2395)" title="套用">✓</button>
+              <button class="preset-action-btn" onclick="editPresetName(1763192536804.2395)" title="編輯">✏️</button>
+              <button class="preset-action-btn delete" onclick="deletePreset(1763192536804.2395)" title="刪除">🗑️</button>
+            </div>
+          </div>
+          <div class="preset-card-details">
+            cubic-bezier(0, -2, 0, -2)<br>
+            ⏱️ 0.6s
+          </div>
+          <div class="preset-card-meta">📅 2025/11/15 下午02:39</div>
+        </div>
+      </div>
+
+        <div class="export-import-buttons">
+          <button class="export-btn" onclick="exportPresets()">
+            💾 匯出設定
+          </button>
+          <button class="import-btn" onclick="document.getElementById('hiddenFileInput').click()">
+            📂 匯入設定
+          </button>
+        </div>
+
+
+      </div>
+    </div>
+
+    <button class="copy-btn" onclick="copyCodeWithPrompt()">📋 複製完整程式碼 + AI 提示詞</button>
+    <button class="copy-btn secondary" onclick="copyCSSOnly()">📄 僅複製 CSS</button>
+
+    <div class="hint">
+      💡 <strong>調整技巧：</strong><br>
+      • <strong>慢啟動</strong>：增加 x1 (0.6-0.8)，降低 y1 (0-0.3)<br>
+      • <strong>彈性結束</strong>：讓 y2 &gt; 1 (1.2-1.8)<br>
+      • <strong>回彈效果</strong>：讓 y1 &lt; 0 或 y2 &gt; 1<br>
+      • <strong>極致黏稠</strong>：同時使用慢啟動 + 慢結束<br>
+      • <strong>快速輸入</strong>：點擊數值可直接輸入<br>
+      • <strong>拖曳排序</strong>：拖動自定義卡片可調整順序
+    </div>
+  </div>
+
+  <script>
+    // ============ 預設管理類 ============
+    class PresetManager {
+      constructor() {
+        this.storageKey = 'easingToolData';
+        this.currentActiveId = null;
+      }
+
+      load() {
+        const data = localStorage.getItem(this.storageKey);
+        return data ? JSON.parse(data) : this.getDefaultData();
+      }
+
+      getDefaultData() {
+        return {
+          customPresets: [],
+          uiState: {
+            collapseParams: false,
+            collapsePresets: false,
+            collapseCustom: false
+          }
+        };
+      }
+
+      save(data) {
+        localStorage.setItem(this.storageKey, JSON.stringify(data));
+      }
+
+      addPreset(preset) {
+        const data = this.load();
+        preset.id = Date.now();
+        preset.createdAt = new Date().toISOString();
+        preset.order = data.customPresets.length;
+        data.customPresets.push(preset);
+        this.save(data);
+        return preset;
+      }
+
+      deletePreset(id) {
+        const data = this.load();
+        data.customPresets = data.customPresets.filter(p => p.id !== id);
+        this.save(data);
+      }
+
+      updatePreset(id, updates) {
+        const data = this.load();
+        const preset = data.customPresets.find(p => p.id === id);
+        if (preset) {
+          Object.assign(preset, updates);
+          this.save(data);
+        }
+      }
+
+      updateOrder(presets) {
+        const data = this.load();
+        data.customPresets = presets.map((p, index) => ({...p, order: index}));
+        this.save(data);
+      }
+
+      export() {
+        const data = this.load();
+        return {
+          version: '1.0',
+          exportDate: new Date().toISOString(),
+          presets: data.customPresets
+        };
+      }
+
+      import(jsonData) {
+        try {
+          if (!jsonData.version || !jsonData.presets) {
+            throw new Error('無效的檔案格式');
+          }
+
+          const data = this.load();
+          jsonData.presets.forEach(preset => {
+            preset.id = Date.now() + Math.random();
+            preset.order = data.customPresets.length;
+            data.customPresets.push(preset);
+          });
+          this.save(data);
+          return true;
+        } catch (error) {
+          console.error('匯入失敗:', error);
+          return false;
+        }
+      }
+
+      saveUIState(state) {
+        const data = this.load();
+        data.uiState = {...data.uiState, ...state};
+        this.save(data);
+      }
+
+      loadUIState() {
+        const data = this.load();
+        return data.uiState;
+      }
+    }
+
+    const presetManager = new PresetManager();
+
+    // ============ 初始化 ============
+    function init() {
+      updateBezier();
+      renderCustomPresets();
+      restoreUIState();
+      setupFileInput();
+      setupScrollIndicator();
+    }
+
+    // ============ 滾動提示 ============
+    function setupScrollIndicator() {
+      const section = document.getElementById('customPresetsSection');
+      const indicator = document.getElementById('scrollIndicator');
+
+      if (!section || !indicator) return;
+
+      function checkScroll() {
+        const hasScroll = section.scrollHeight > section.clientHeight;
+        const isAtBottom = section.scrollHeight - section.scrollTop <= section.clientHeight + 10;
+        
+        if (hasScroll && !isAtBottom) {
+          indicator.classList.add('show');
+        } else {
+          indicator.classList.remove('show');
+        }
+      }
+
+      section.addEventListener('scroll', checkScroll);
+      
+      // 初始檢查和內容變化時檢查
+      const observer = new MutationObserver(checkScroll);
+      observer.observe(section, { childList: true, subtree: true });
+      
+      checkScroll();
+    }
+
+    // ============ 收合功能 ============
+    function toggleSection(header) {
+      const content = header.nextElementSibling;
+      const toggle = header.querySelector('.section-toggle');
+      
+      content.classList.toggle('collapsed');
+      toggle.classList.toggle('collapsed');
+
+      // 儲存狀態
+      const sections = document.querySelectorAll('.collapsible-section');
+      const states = Array.from(sections).map(section => {
+        return section.querySelector('.section-content').classList.contains('collapsed');
+      });
+      
+      presetManager.saveUIState({
+        collapseParams: states[0],
+        collapsePresets: states[1],
+        collapseCustom: states[2]
+      });
+
+      // 重新檢查滾動提示
+      setTimeout(setupScrollIndicator, 400);
+    }
+
+    function restoreUIState() {
+      const state = presetManager.loadUIState();
+      const sections = document.querySelectorAll('.collapsible-section');
+      
+      if (state.collapseParams) {
+        sections[0].querySelector('.section-header').click();
+      }
+      if (state.collapsePresets) {
+        sections[1].querySelector('.section-header').click();
+      }
+      if (state.collapseCustom) {
+        sections[2].querySelector('.section-header').click();
+      }
+    }
+
+    // ============ 緩動曲線更新 ============
+    function updateBezier() {
+      const x1 = parseFloat(document.getElementById('x1').value);
+      const y1 = parseFloat(document.getElementById('y1').value);
+      const x2 = parseFloat(document.getElementById('x2').value);
+      const y2 = parseFloat(document.getElementById('y2').value);
+      const duration = parseFloat(document.getElementById('duration').value);
+
+      document.getElementById('x1Value').textContent = x1.toFixed(2);
+      document.getElementById('y1Value').textContent = y1.toFixed(2);
+      document.getElementById('x2Value').textContent = x2.toFixed(2);
+      document.getElementById('y2Value').textContent = y2.toFixed(2);
+      document.getElementById('durationValue').textContent = duration.toFixed(1);
+
+      const bezierString = `cubic-bezier(${x1}, ${y1}, ${x2}, ${y2})`;
+      document.getElementById('bezierDisplay').textContent = bezierString;
+
+      const slider = document.getElementById('slider');
+      slider.style.transition = `transform ${duration}s ${bezierString}`;
+    }
+
+    function makeEditable(paramId, min, max) {
+      const valueSpan = document.getElementById(paramId + 'Value');
+      const currentValue = parseFloat(valueSpan.textContent);
+      
+      const input = document.createElement('input');
+      input.type = 'number';
+      input.className = 'control-value-input';
+      input.value = currentValue;
+      input.step = paramId === 'duration' ? '0.1' : '0.01';
+      input.min = min;
+      input.max = max;
+      
+      valueSpan.replaceWith(input);
+      input.focus();
+      input.select();
+      
+      function finishEditing() {
+        let newValue = parseFloat(input.value);
+        
+        if (isNaN(newValue)) {
+          newValue = currentValue;
+        } else {
+          newValue = Math.max(min, Math.min(max, newValue));
+        }
+        
+        document.getElementById(paramId).value = newValue;
+        
+        const newSpan = document.createElement('span');
+        newSpan.className = 'control-value';
+        newSpan.id = paramId + 'Value';
+        newSpan.onclick = () => makeEditable(paramId, min, max);
+        newSpan.textContent = paramId === 'duration' ? newValue.toFixed(1) : newValue.toFixed(2);
+        
+        input.replaceWith(newSpan);
+        updateBezier();
+      }
+      
+      input.addEventListener('blur', finishEditing);
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          finishEditing();
+        } else if (e.key === 'Escape') {
+          const newSpan = document.createElement('span');
+          newSpan.className = 'control-value';
+          newSpan.id = paramId + 'Value';
+          newSpan.onclick = () => makeEditable(paramId, min, max);
+          newSpan.textContent = paramId === 'duration' ? currentValue.toFixed(1) : currentValue.toFixed(2);
+          input.replaceWith(newSpan);
+        }
+      });
+    }
+
+    function applyPreset(x1, y1, x2, y2, duration) {
+      document.getElementById('x1').value = x1;
+      document.getElementById('y1').value = y1;
+      document.getElementById('x2').value = x2;
+      document.getElementById('y2').value = y2;
+      document.getElementById('duration').value = duration;
+      updateBezier();
+      presetManager.currentActiveId = null;
+      renderCustomPresets();
+    }
+
+    function toggle(btn) {
+      const container = btn.closest('.toggle-buttons');
+      const slider = container.querySelector('.toggle-slider');
+      const buttons = container.querySelectorAll('.toggle-btn');
+      
+      buttons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      
+      const index = Array.from(buttons).indexOf(btn);
+      if (index === 1) {
+        slider.classList.add('move-right');
+      } else {
+        slider.classList.remove('move-right');
+      }
+    }
+
+    // ============ 自定義預設管理 ============
+    function showSaveModal() {
+      const data = presetManager.load();
+      const defaultName = `自定義 ${data.customPresets.length + 1}`;
+      
+      const modal = document.createElement('div');
+      modal.className = 'modal-overlay';
+      modal.innerHTML = `
+        <div class="modal">
+          <h3>💾 儲存自定義預設</h3>
+          <input type="text" class="modal-input" id="presetNameInput" value="${defaultName}" placeholder="輸入預設名稱" maxlength="20">
+          <div class="modal-buttons">
+            <button class="modal-btn secondary" onclick="closeModal()">取消</button>
+            <button class="modal-btn primary" onclick="savePreset()">儲存</button>
+          </div>
+        </div>
+      `;
+      
+      document.body.appendChild(modal);
+      document.getElementById('presetNameInput').focus();
+      document.getElementById('presetNameInput').select();
+      
+      // Enter 鍵儲存
+      document.getElementById('presetNameInput').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') savePreset();
+        if (e.key === 'Escape') closeModal();
+      });
+    }
+
+    function closeModal() {
+      const modal = document.querySelector('.modal-overlay');
+      if (modal) modal.remove();
+    }
+
+    function savePreset() {
+      const nameInput = document.getElementById('presetNameInput');
+      const name = nameInput.value.trim();
+      
+      if (!name) {
+        showToast('❌ 名稱不能為空', 'error');
+        return;
+      }
+
+      const preset = {
+        name: name,
+        x1: parseFloat(document.getElementById('x1').value),
+        y1: parseFloat(document.getElementById('y1').value),
+        x2: parseFloat(document.getElementById('x2').value),
+        y2: parseFloat(document.getElementById('y2').value),
+        duration: parseFloat(document.getElementById('duration').value)
+      };
+
+      presetManager.addPreset(preset);
+      closeModal();
+      renderCustomPresets();
+      showToast('✅ 預設已儲存！', 'success');
+
+      // 展開自定義區塊
+      const customSection = document.querySelectorAll('.collapsible-section')[2];
+      const content = customSection.querySelector('.section-content');
+      if (content.classList.contains('collapsed')) {
+        customSection.querySelector('.section-header').click();
+      }
+
+      // 重新檢查滾動提示
+      setTimeout(setupScrollIndicator, 100);
+    }
+
+    function renderCustomPresets() {
+      const data = presetManager.load();
+      const container = document.getElementById('customPresetsContainer');
+      const countSpan = document.getElementById('customCount');
+      
+      countSpan.textContent = data.customPresets.length;
+
+      if (data.customPresets.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <p>尚無自定義預設</p>
+            <p style="font-size: 12px; color: #ccc; margin-top: 5px;">調整參數後點擊上方按鈕儲存</p>
+          </div>
+        `;
+        setTimeout(setupScrollIndicator, 100);
+        return;
+      }
+
+      container.innerHTML = data.customPresets
+        .sort((a, b) => a.order - b.order)
+        .map(preset => createPresetCard(preset))
+        .join('');
+
+      setupDragAndDrop();
+      setTimeout(setupScrollIndicator, 100);
+    }
+
+    function createPresetCard(preset) {
+      const date = new Date(preset.createdAt).toLocaleString('zh-TW', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+
+      const isActive = presetManager.currentActiveId === preset.id;
+
+      return `
+        <div class="custom-preset-card ${isActive ? 'active' : ''}" draggable="true" data-id="${preset.id}">
+          <div class="preset-card-header">
+            <div class="preset-name" onclick="editPresetName(${preset.id})">${preset.name}</div>
+            <div class="preset-actions">
+              <button class="preset-action-btn apply" onclick="applyCustomPreset(${preset.id})" title="套用">✓</button>
+              <button class="preset-action-btn" onclick="editPresetName(${preset.id})" title="編輯">✏️</button>
+              <button class="preset-action-btn delete" onclick="deletePreset(${preset.id})" title="刪除">🗑️</button>
+            </div>
+          </div>
+          <div class="preset-card-details">
+            cubic-bezier(${preset.x1}, ${preset.y1}, ${preset.x2}, ${preset.y2})<br>
+            ⏱️ ${preset.duration}s
+          </div>
+          <div class="preset-card-meta">📅 ${date}</div>
+        </div>
+      `;
+    }
+
+    function applyCustomPreset(id) {
+      const data = presetManager.load();
+      const preset = data.customPresets.find(p => p.id === id);
+      
+      if (preset) {
+        applyPreset(preset.x1, preset.y1, preset.x2, preset.y2, preset.duration);
+        presetManager.currentActiveId = id;
+        renderCustomPresets();
+        showToast('✅ 已套用預設', 'success');
+      }
+    }
+
+    function editPresetName(id) {
+      const data = presetManager.load();
+      const preset = data.customPresets.find(p => p.id === id);
+      
+      if (!preset) return;
+
+      const card = document.querySelector(`[data-id="${id}"]`);
+      const nameDiv = card.querySelector('.preset-name');
+      
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.className = 'preset-name-input';
+      input.value = preset.name;
+      input.maxLength = 20;
+      
+      nameDiv.replaceWith(input);
+      input.focus();
+      input.select();
+
+      function finishEditing() {
+        const newName = input.value.trim();
+        
+        if (!newName) {
+          showToast('❌ 名稱不能為空', 'error');
+          input.focus();
+          return;
+        }
+
+        presetManager.updatePreset(id, { name: newName });
+        renderCustomPresets();
+        showToast('✅ 名稱已更新', 'success');
+      }
+
+      input.addEventListener('blur', finishEditing);
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') finishEditing();
+        if (e.key === 'Escape') renderCustomPresets();
+      });
+    }
+
+    function deletePreset(id) {
+      const data = presetManager.load();
+      const preset = data.customPresets.find(p => p.id === id);
+      
+      if (!preset) return;
+
+      if (confirm(`確定要刪除「${preset.name}」嗎？`)) {
+        presetManager.deletePreset(id);
+        renderCustomPresets();
+        showToast('✅ 預設已刪除', 'success');
+      }
+    }
+
+    // ============ 拖曳排序 ============
+    function setupDragAndDrop() {
+      const cards = document.querySelectorAll('.custom-preset-card');
+      let draggedElement = null;
+
+      cards.forEach(card => {
+        card.addEventListener('dragstart', function(e) {
+          draggedElement = this;
+          this.classList.add('dragging');
+          e.dataTransfer.effectAllowed = 'move';
+        });
+
+        card.addEventListener('dragend', function() {
+          this.classList.remove('dragging');
+          draggedElement = null;
+        });
+
+        card.addEventListener('dragover', function(e) {
+          e.preventDefault();
+          if (draggedElement === this) return;
+
+          const container = this.parentNode;
+          const afterElement = getDragAfterElement(container, e.clientY);
+          
+          if (afterElement == null) {
+            container.appendChild(draggedElement);
+          } else {
+            container.insertBefore(draggedElement, afterElement);
+          }
+        });
+
+        card.addEventListener('drop', function(e) {
+          e.preventDefault();
+          updatePresetsOrder();
+        });
+      });
+    }
+
+    function getDragAfterElement(container, y) {
+      const draggableElements = [...container.querySelectorAll('.custom-preset-card:not(.dragging)')];
+
+      return draggableElements.reduce((closest, child) => {
+        const box = child.getBoundingClientRect();
+        const offset = y - box.top - box.height / 2;
+
+        if (offset < 0 && offset > closest.offset) {
+          return { offset: offset, element: child };
+        } else {
+          return closest;
+        }
+      }, { offset: Number.NEGATIVE_INFINITY }).element;
+    }
+
+    function updatePresetsOrder() {
+      const cards = document.querySelectorAll('.custom-preset-card');
+      const data = presetManager.load();
+      
+      const newOrder = Array.from(cards).map(card => {
+        const id = parseInt(card.dataset.id);
+        return data.customPresets.find(p => p.id === id);
+      });
+
+      presetManager.updateOrder(newOrder);
+      showToast('✅ 順序已更新', 'success');
+    }
+
+    // ============ 匯出/匯入 ============
+    function exportPresets() {
+      const exportData = presetManager.export();
+      
+      if (exportData.presets.length === 0) {
+        showToast('❌ 沒有可匯出的預設', 'error');
+        return;
+      }
+
+      const dataStr = JSON.stringify(exportData, null, 2);
+      const dataBlob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(dataBlob);
+      
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `easing-presets-${new Date().toISOString().slice(0,10)}.json`;
+      link.click();
+      
+      URL.revokeObjectURL(url);
+      showToast('✅ 設定已匯出', 'success');
+    }
+
+    function setupFileInput() {
+      const fileInput = document.getElementById('hiddenFileInput');
+      fileInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(event) {
+          try {
+            const jsonData = JSON.parse(event.target.result);
+            const success = presetManager.import(jsonData);
+            
+            if (success) {
+              renderCustomPresets();
+              showToast(`✅ 成功匯入 ${jsonData.presets.length} 個預設`, 'success');
+            } else {
+              showToast('❌ 匯入失敗，檔案格式錯誤', 'error');
+            }
+          } catch (error) {
+            showToast('❌ 匯入失敗，無效的 JSON 檔案', 'error');
+          }
+        };
+        
+        reader.readAsText(file);
+        fileInput.value = '';
+      });
+    }
+
+    // ============ 複製功能 ============
+    function copyCSSOnly() {
+      const x1 = document.getElementById('x1').value;
+      const y1 = document.getElementById('y1').value;
+      const x2 = document.getElementById('x2').value;
+      const y2 = document.getElementById('y2').value;
+      const duration = document.getElementById('duration').value;
+
+      const code = `transition: transform ${duration}s cubic-bezier(${x1}, ${y1}, ${x2}, ${y2});`;
+      copyToClipboard(code);
+    }
+
+    function copyCodeWithPrompt() {
+      const x1 = document.getElementById('x1').value;
+      const y1 = document.getElementById('y1').value;
+      const x2 = document.getElementById('x2').value;
+      const y2 = document.getElementById('y2').value;
+      const duration = document.getElementById('duration').value;
+
+      const fullCode = `# 給 AI 的指令
+
+我想在我的專案中加入以下滑動按鈕的緩動效果,請幫我整合到現有程式碼中。
+
+## 緩動效果參數
+- 動畫時長: ${duration}秒
+- 緩動曲線: cubic-bezier(${x1}, ${y1}, ${x2}, ${y2})
+
+## CSS 程式碼
+\`\`\`css
+.toggle-slider {
+position: absolute;
+background: white;
+border-radius: 10px;
+box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+transition: transform ${duration}s cubic-bezier(${x1}, ${y1}, ${x2}, ${y2});
+}
+
+.toggle-slider.move-right {
+transform: translateX(calc(100% + 間距));
+}
+\`\`\`
+
+## HTML 結構參考
+\`\`\`html
+<div class="toggle-buttons">
+<div class="toggle-slider"></div>
+<button class="toggle-btn active">選項 A</button>
+<button class="toggle-btn">選項 B</button>
+</div>
+\`\`\`
+
+## JavaScript 邏輯
+\`\`\`javascript
+function toggle(btn) {
+const slider = document.querySelector('.toggle-slider');
+const buttons = document.querySelectorAll('.toggle-btn');
+
+buttons.forEach(b => b.classList.remove('active'));
+btn.classList.add('active');
+
+const index = Array.from(buttons).indexOf(btn);
+if (index === 1) {
+  slider.classList.add('move-right');
+} else {
+  slider.classList.remove('move-right');
+}
+}
+\`\`\`
+
+請根據我的專案結構調整這個效果,保持相同的緩動曲線參數。`;
+
+      copyToClipboard(fullCode);
+    }
+
+    function copyToClipboard(text) {
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(() => {
+          showToast('✅ 已成功複製到剪貼簿！', 'success');
+        }).catch(err => {
+          fallbackCopy(text);
+        });
+      } else {
+        fallbackCopy(text);
+      }
+    }
+
+    function fallbackCopy(text) {
+      const textarea = document.getElementById('hiddenTextarea');
+      textarea.value = text;
+      textarea.style.position = 'fixed';
+      textarea.style.left = '0';
+      textarea.style.top = '0';
+      textarea.style.opacity = '1';
+      textarea.focus();
+      textarea.select();
+      
+      try {
+        const successful = document.execCommand('copy');
+        if (successful) {
+          showToast('✅ 已成功複製到剪貼簿！', 'success');
+        } else {
+          showToast('❌ 複製失敗，請手動複製', 'error');
+        }
+      } catch (err) {
+        showToast('❌ 複製失敗，請手動複製', 'error');
+      }
+      
+      textarea.style.position = 'absolute';
+      textarea.style.left = '-9999px';
+      textarea.style.opacity = '0';
+    }
+
+    function showToast(message, type) {
+      const oldToast = document.querySelector('.toast');
+      if (oldToast) oldToast.remove();
+
+      const toast = document.createElement('div');
+      toast.className = `toast ${type === 'error' ? 'error' : ''}`;
+      toast.textContent = message;
+      document.body.appendChild(toast);
+
+      setTimeout(() => {
+        toast.style.animation = 'slideIn 0.3s ease reverse';
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
+
+    // ============ 啟動 ============
+    init();
+  </script>
+
+</body></html>
